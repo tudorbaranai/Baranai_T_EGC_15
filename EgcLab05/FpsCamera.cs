@@ -90,6 +90,28 @@ public class FpsCamera : Camera
         //           (W +forward, S -forward, D +_right, A -_right); (3) normalizați "move";
         //           (4) _position += move * viteză * dt (viteza crește de SprintFactor ori cu Shift stânga).
 
+        // P5 (1): în modul mers, „înainte” este Front proiectat pe planul orizontal (y = 0, apoi normalizat):
+        //     privind în jos și apăsând W, mergeți înainte, nu intrați în podea, iar înălțimea rămâne 1,70.
+        //     Pitch-ul fiind limitat la ±89°, componenta orizontală a lui Front nu ajunge niciodată la zero.
+        Vector3 forward = Vector3.Normalize(new Vector3(_front.X, 0.0f, _front.Z));
+
+        // P5 (2): suma direcțiilor tastelor apăsate. _right este deja orizontal (Front × WorldUp).
+        Vector3 move = Vector3.Zero;
+        if (keyboard.IsKeyDown(Keys.W)) move += forward;
+        if (keyboard.IsKeyDown(Keys.S)) move -= forward;
+        if (keyboard.IsKeyDown(Keys.D)) move += _right;
+        if (keyboard.IsKeyDown(Keys.A)) move -= _right;
+
+        // P5 (3): normalizarea, ca pe diagonală (W + D) viteza să nu fie de √2 ori mai mare.
+        if (move.LengthSquared > 0.0f)
+        {
+            move = Vector3.Normalize(move);
+
+            // P5 (4): viteză × dt: aceeași distanță pe secundă la 30 sau la 300 de cadre (VSync pornit / oprit, tasta L).
+            float speed = MoveSpeed * (keyboard.IsKeyDown(Keys.LeftShift) ? SprintFactor : 1.0f);
+            _position += move * speed * dt;
+        }
+
         // TODO 5.7 (facultativ): în zbor liber (FreeFly), "forward" este chiar _front,
         //           iar Space urcă și Ctrl stânga coboară (pe axa Y a lumii, WorldUp).
     }
