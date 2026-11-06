@@ -102,13 +102,36 @@ public class Game : GameWindow
         float dt = (float)args.Time;
         SceneObject sel = _scene[_selected];
 
-        const float moveSpeed = 2.0f;   // unități de lume pe secundă
-        if (KeyboardState.IsKeyDown(Keys.Left))  sel.Transform.Position.X -= moveSpeed * dt;
-        if (KeyboardState.IsKeyDown(Keys.Right)) sel.Transform.Position.X += moveSpeed * dt;
-        if (KeyboardState.IsKeyDown(Keys.Down))  sel.Transform.Position.Y -= moveSpeed * dt;
-        if (KeyboardState.IsKeyDown(Keys.Up))    sel.Transform.Position.Y += moveSpeed * dt;
+        // T2: Shift stânga ținut apăsat face toate cele trei mișcări ale obiectului de 3 ori mai rapide.
+        //     Pentru scalare, „de 3 ori mai rapid” înseamnă factorul 1,5 aplicat de 3 ori pe secundă: 1,5^(3·dt).
+        float speedUp = KeyboardState.IsKeyDown(Keys.LeftShift) ? 3.0f : 1.0f;
 
-        // TODO (T2): Q / E rotesc obiectul, Z / X îl scalează
+        const float moveSpeed = 2.0f;   // unități de lume pe secundă
+        if (KeyboardState.IsKeyDown(Keys.Left))  sel.Transform.Position.X -= moveSpeed * speedUp * dt;
+        if (KeyboardState.IsKeyDown(Keys.Right)) sel.Transform.Position.X += moveSpeed * speedUp * dt;
+        if (KeyboardState.IsKeyDown(Keys.Down))  sel.Transform.Position.Y -= moveSpeed * speedUp * dt;
+        if (KeyboardState.IsKeyDown(Keys.Up))    sel.Transform.Position.Y += moveSpeed * speedUp * dt;
+
+        // T2: Q / E = rotație cu 90° pe secundă (grade pe secundă, adunate la unghi).
+        //     Q = sens trigonometric (unghi pozitiv), E = sens orar (unghi negativ).
+        const float rotateSpeed = 90.0f;   // grade pe secundă
+        if (KeyboardState.IsKeyDown(Keys.Q)) sel.Transform.Rotation += rotateSpeed * speedUp * dt;
+        if (KeyboardState.IsKeyDown(Keys.E)) sel.Transform.Rotation -= rotateSpeed * speedUp * dt;
+
+        // T2: Z / X = micșorare / mărire uniformă cu factorul 1,5 pe secundă: pe un cadru de durată dt,
+        //     scara se înmulțește cu 1,5^dt (sau se împarte la 1,5^dt), apoi se limitează între 0,1 și 10.
+        // T2: scalarea se face prin înmulțire și nu prin adunare pentru că scara este un raport (de câte ori
+        //     e mai mare obiectul), nu o distanță. Prin adunare (de ex. −0,5 pe secundă), scara ar ajunge la 0
+        //     (obiectul dispare) și apoi la valori negative (forma se oglindește, „se întoarce”); în plus, viteza
+        //     aparentă ar depinde de mărimea curentă. Prin înmulțire, scara se apropie de 0 fără să-l atingă,
+        //     iar mărirea și micșorarea sunt simetrice: o secundă de X urmată de o secundă de Z readuce exact
+        //     mărimea inițială (1,5 · 1/1,5 = 1). Puterea f^dt face rezultatul independent de numărul de cadre.
+        const float scaleFactor = 1.5f;    // factor pe secundă
+        float scaleStep = MathF.Pow(scaleFactor, speedUp * dt);
+        if (KeyboardState.IsKeyDown(Keys.X)) sel.Transform.Scale *= scaleStep;
+        if (KeyboardState.IsKeyDown(Keys.Z)) sel.Transform.Scale /= scaleStep;
+        sel.Transform.Scale.X = Math.Clamp(sel.Transform.Scale.X, 0.1f, 10.0f);
+        sel.Transform.Scale.Y = Math.Clamp(sel.Transform.Scale.Y, 0.1f, 10.0f);
 
         if (KeyboardState.IsKeyPressed(Keys.Tab)) _selected = (_selected + 1) % _scene.Count;
         if (KeyboardState.IsKeyPressed(Keys.O))   _camera.IsPerspective = !_camera.IsPerspective;
