@@ -27,27 +27,24 @@ public abstract class Camera
     public float AspectRatio { get; private set; } = 4.0f / 3.0f;
 
     /// <summary>Matricea de proiecție în perspectivă.</summary>
+    // P1 (TODO 5.1 a): proiecția în perspectivă. CreatePerspectiveFieldOfView primește FOV-ul VERTICAL
+    //     în radiani (în grade ar arunca ArgumentOutOfRangeException), raportul de aspect și planele near / far.
+    //     Proiecția ortografică provizorie (TemporaryOrthographic) a fost ștearsă.
     public Matrix4 ProjectionMatrix =>
-        // TODO 5.1 (a): proiecția în perspectivă, cu FieldOfView (în radiani!), AspectRatio, Near, Far.
-        //               Până atunci se folosește proiecția ortografică din laboratorul 4.
-        TemporaryOrthographic();
-
-    /// <summary>Proiecția ortografică din laboratorul 4 (provizorie; se șterge după TODO 5.1).</summary>
-    private Matrix4 TemporaryOrthographic()
-    {
-        const float viewHeight = 8.0f;
-        float h = viewHeight / 2.0f;
-        float w = h * AspectRatio;
-        return Matrix4.CreateOrthographicOffCenter(-w, w, -h, h, Near, Far);
-    }
+        Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FieldOfView), AspectRatio, Near, Far);
 
     /// <summary>Câmpul vizual ORIZONTAL, în grade, care rezultă din cel vertical și din raportul de aspect.</summary>
+    // P1 (TODO 5.1 b): hFOV = 2 · atan( tan(vFOV / 2) · aspect ). Funcțiile trigonometrice lucrează în radiani,
+    //     deci vFOV se convertește în radiani, iar rezultatul înapoi în grade. La 800 × 600 și vFOV = 60°: ≈ 75,2°.
+    // P1: când fereastra se lățește, vFOV rămâne același (îl fixăm noi), iar hFOV crește odată cu aspectul:
+    //     se vede mai mult în lateral, nu mai puțin pe verticală.
     public float HorizontalFov
     {
         get
         {
-            // TODO 5.1 (b): hFOV = 2 · atan( tan(vFOV / 2) · aspect ); atenție la grade / radiani
-            return 0.0f;
+            float vFov = MathHelper.DegreesToRadians(FieldOfView);
+            float hFov = 2.0f * MathF.Atan(MathF.Tan(vFov / 2.0f) * AspectRatio);
+            return MathHelper.RadiansToDegrees(hFov);
         }
     }
 
