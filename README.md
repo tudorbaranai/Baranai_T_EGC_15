@@ -13,8 +13,8 @@ Pe branch-ul `main` se află doar acest index.
 
 | Branch | Laborator | Folderul proiectului | Termen | Conținut |
 |--------|-----------|----------------------|--------|----------|
-| [`tema04`](../../tree/tema04) | #04 – transformări 2D, matricele model / view / projection, tastatura și mouse-ul | `EgcLab04/` | 07.11.2026, 20:00 | T1, T2, T3 (obligatorii), T4, T5 (facultative) |
-| [`tema05`](../../tree/tema05) | #05 – mesh procedural, testul de adâncime, camera FPS și FOV | `EgcLab05/` | 14.11.2026, 12:00 | P1–P5, P6–P7 (facultative), tema: camera orbită (tasta V) + ambele bonusuri |
+| [`tema04`](https://github.com/tudorbaranai/Baranai_T_EGC_15/tree/tema04) | #04 – transformări 2D, matricele model / view / projection, tastatura și mouse-ul | `EgcLab04/` | 07.11.2026, 20:00 | T1, T2, T3 (obligatorii), T4, T5 (facultative) |
+| [`tema05`](https://github.com/tudorbaranai/Baranai_T_EGC_15/tree/tema05) | #05 – mesh procedural, testul de adâncime, camera FPS și FOV | `EgcLab05/` | 14.11.2026, 12:00 | P1–P5, P6–P7 (facultative), tema: camera orbită (tasta V) + ambele bonusuri |
 
 ## Convenții respectate
 
