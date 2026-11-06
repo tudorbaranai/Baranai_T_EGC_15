@@ -32,7 +32,8 @@ public static class ConsolePanel
         Console.WriteLine();
         Console.WriteLine("=============== EGC – Laborator 05: comenzi ===============");
         Console.WriteLine(" Mouse          privire în jur (camera FPS; cursorul este captiv)");
-        Console.WriteLine(" W A S D        deplasare (Shift = mai repede)");
+        Console.WriteLine(" W A S D        deplasare (Shift = mai repede); în modul orbită mută ținta");
+        Console.WriteLine(" Clic st. + mouse / săgeți   rotirea camerei orbită în jurul țintei");
         Console.WriteLine(" Space / Ctrl   sus / jos (doar în zbor liber)");
         Console.WriteLine(" Rotița         FOV (camera FPS) / distanța (camera orbită)");
         Console.WriteLine(" G              mers <-> zbor liber (FPS)");
