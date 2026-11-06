@@ -227,8 +227,86 @@ public static class Shapes
     /// </summary>
     public static Mesh Cylinder(float radius, float height, int segments)
     {
-        // TODO 5.8 (facultativ): vârfurile și indicii cilindrului; până atunci, o formă goală.
-        return new Mesh(Array.Empty<float>(), Array.Empty<uint>());
+        // P7 (TODO 5.8, facultativ). Trei părți, fiecare cu vârfurile ei (ca la cub, o margine comună
+        // a două părți are culori diferite, deci vârfuri separate):
+        //   - suprafața laterală: grila UV cu un singur rând de celule (stacks = 1), 2 × (segments + 1) vârfuri,
+        //     culoarea ca la sferă (roșu = u, verde = v); ultima coloană dublează prima (cusătura);
+        //   - capacul de sus și capacul de jos: evantaie de triunghiuri (centru + segments + 1 vârfuri pe cerc),
+        //     ca poligonul regulat din laboratorul 3.
+        // Sensul de parcurgere: trigonometric privit din afară (verificare cu tasta C).
+        int columns = segments + 1;
+        int sideVertices = 2 * columns;
+        int capVertices = 1 + columns;                       // centrul + cercul (cu ultimul punct dublat)
+        var vertices = new float[(sideVertices + 2 * capVertices) * Mesh.FloatsPerVertex];
+        var indices = new uint[segments * 6 + 2 * segments * 3];
+
+        float halfHeight = height / 2.0f;
+
+        // 1. Suprafața laterală: rândul 0 jos (v = 0), rândul 1 sus (v = 1); aceeași parametrizare ca sfera
+        //    (x = r cos λ, z = −r sin λ), deci aceiași indici ca la o celulă a sferei.
+        for (int i = 0; i < 2; i++)
+        {
+            float v = i;
+            float y = -halfHeight + v * height;
+            for (int j = 0; j < columns; j++)
+            {
+                float u = (float)j / segments;
+                float longitude = u * 2.0f * MathF.PI;
+                SetVertex(vertices, i * columns + j,
+                          radius * MathF.Cos(longitude), y, -radius * MathF.Sin(longitude), u, v, 0.35f);
+            }
+        }
+
+        int k = 0;
+        for (int j = 0; j < segments; j++)
+        {
+            uint bottomLeft = (uint)j;
+            uint bottomRight = bottomLeft + 1;
+            uint topLeft = bottomLeft + (uint)columns;
+            uint topRight = topLeft + 1;
+
+            indices[k++] = bottomLeft;  indices[k++] = bottomRight; indices[k++] = topRight;
+            indices[k++] = topRight;    indices[k++] = topLeft;     indices[k++] = bottomLeft;
+        }
+
+        // 2. Capacele. Privit de deasupra (dreapta = +X, sus = −Z), λ crescător merge de la +X spre −Z, adică
+        //    în sens trigonometric: capacul de sus folosește (centru, j, j + 1). Privit de dedesubt sensul se
+        //    inversează, deci capacul de jos folosește (centru, j + 1, j).
+        k = AddCap(vertices, indices, k, sideVertices, radius, halfHeight, segments, top: true,
+                   new Color4(0.3f, 0.9f, 0.5f, 1.0f));
+        AddCap(vertices, indices, k, sideVertices + capVertices, radius, -halfHeight, segments, top: false,
+               new Color4(0.8f, 0.3f, 0.8f, 1.0f));
+
+        return new Mesh(vertices, indices);
+    }
+
+    /// <summary>
+    /// P7: un capac de cilindru (evantai de triunghiuri) la înălțimea <paramref name="y"/>: vârful
+    /// <paramref name="first"/> este centrul, urmat de <paramref name="segments"/> + 1 vârfuri pe cerc.
+    /// Întoarce poziția din <paramref name="indices"/> de unde se poate continua scrierea.
+    /// </summary>
+    private static int AddCap(float[] vertices, uint[] indices, int k, int first, float radius, float y,
+                              int segments, bool top, Color4 color)
+    {
+        SetVertex(vertices, first, 0.0f, y, 0.0f, color);
+        for (int j = 0; j <= segments; j++)
+        {
+            float longitude = (float)j / segments * 2.0f * MathF.PI;
+            // marginea capacului puțin mai închisă la culoare, ca evantaiul să se distingă de centru
+            var rim = new Color4(color.R * 0.6f, color.G * 0.6f, color.B * 0.6f, 1.0f);
+            SetVertex(vertices, first + 1 + j, radius * MathF.Cos(longitude), y, -radius * MathF.Sin(longitude), rim);
+        }
+
+        uint center = (uint)first;
+        for (int j = 0; j < segments; j++)
+        {
+            uint a = center + 1 + (uint)j;
+            uint b = a + 1;
+            indices[k++] = center;
+            indices[k++] = top ? a : b;
+            indices[k++] = top ? b : a;
+        }
+        return k;
     }
 
     // =====================================================================================

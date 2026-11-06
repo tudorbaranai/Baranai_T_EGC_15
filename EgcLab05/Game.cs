@@ -121,8 +121,12 @@ public class Game : GameWindow
             }
         }
 
-        // TODO 5.8 (facultativ): un cilindru generat procedural, adăugat în scenă
-        //           (de exemplu în punctul (-1.5, 0.75, -6)).
+        // P7 (TODO 5.8, facultativ): cilindrul procedural (rază 0,5, înălțime 1,5, 32 de segmente), cu baza pe podea,
+        //     rotit încet ca să se vadă cusătura și capacele (verificare cu C și F).
+        Mesh cylinder = AddMesh(Shapes.Cylinder(0.5f, 1.5f, 32));
+        SceneObject drum = AddObject("cilindru", cylinder);
+        drum.Transform.Position = new Vector3(-1.5f, 0.75f, -6.0f);
+        drum.Spin = new Vector3(0.0f, 25.0f, 0.0f);
     }
 
     private Mesh AddMesh(Mesh mesh)
