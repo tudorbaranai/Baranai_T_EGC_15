@@ -146,8 +146,12 @@ public class Game : GameWindow
 
         // --- Obiectul selectat: mouse-ul (secțiunea 9) -------------------------------
 
-        // TODO (T3): la clic stânga, obiectul selectat se mută în punctul din lume aflat sub cursor
-        //            (folosiți ScreenToWorld; Depth nu se schimbă)
+        // T3: la clic stânga, obiectul selectat se mută în punctul din lume aflat sub cursor.
+        //     Se schimbă doar Position (x, y); adâncimea (Depth) obiectului rămâne aceeași.
+        if (MouseState.IsButtonPressed(MouseButton.Left))
+        {
+            sel.Transform.Position = ScreenToWorld(MouseState.Position);
+        }
 
         // TODO (T4, facultativ): clic dreapta = pivot; tasta P ținută = rotație în jurul pivotului
 
@@ -228,8 +232,43 @@ public class Game : GameWindow
     /// <summary>Transformă poziția mouse-ului (pixeli, origine stânga-sus) în coordonate de lume.</summary>
     private Vector2 ScreenToWorld(Vector2 mousePixels)
     {
-        // TODO (T3): pasul 1 (pixel → NDC), apoi pasul 2 (NDC → lume, cu inversa lui view * projection)
-        return Vector2.Zero;
+        // T3: pasul 1, pixel → NDC (inversa transformării viewport). Se folosește ClientSize (zona de desenare,
+        //     fără bordură), aceeași cu viewport-ul setat în OnLoad / OnResize.
+        float w = ClientSize.X;
+        float h = ClientSize.Y;
+        float xNdc = 2.0f * mousePixels.X / w - 1.0f;
+        // T3: semnul minus (forma 1 − ...) apare pentru că cele două sisteme au axa y în sensuri opuse:
+        //     la mouse y crește în JOS (originea e în colțul stânga-sus, y = 0 sus și y = H jos), iar în NDC
+        //     y crește în SUS (−1 jos, +1 sus). Fără întoarcerea axei, obiectul ar ajunge în punctul simetric
+        //     față de axa orizontală (clic sus → obiect jos).
+        float yNdc = 1.0f - 2.0f * mousePixels.Y / h;
+
+        // T3: pasul 2, NDC → lume. Lume → NDC este ViewMatrix * ProjectionMatrix (în C#, de la stânga la dreapta),
+        //     deci drumul invers este inversa produsului. Inversa se calculează la fiecare clic, ca să țină cont
+        //     de poziția curentă a camerei, de zoom și de raportul de aspect al ferestrei.
+        Matrix4 inverse = (_camera.ViewMatrix * _camera.ProjectionMatrix).Inverted();
+
+        if (!_camera.IsPerspective)
+        {
+            // Ortografic: z_ndc nu influențează x și y din lume, deci z_ndc = 0 este potrivit.
+            Vector4 world = new Vector4(xNdc, yNdc, 0.0f, 1.0f) * inverse;
+            return world.Xy / world.W;   // la ortografic W = 1, împărțirea nu schimbă nimic
+        }
+
+        // Extra (peste cerința T3, nota din secțiunea 9.2): în perspectivă un pixel este o rază. Se transformă
+        // invers două puncte ale razei (z_ndc = −1 pe planul near și z_ndc = 1 pe planul far), se împart la w,
+        // apoi se intersectează dreapta cu planul z = Depth al obiectului selectat, ca obiectul să ajungă exact
+        // sub cursor și în perspectivă (tasta O).
+        Vector4 nearH = new Vector4(xNdc, yNdc, -1.0f, 1.0f) * inverse;
+        Vector4 farH  = new Vector4(xNdc, yNdc,  1.0f, 1.0f) * inverse;
+        Vector3 nearP = nearH.Xyz / nearH.W;
+        Vector3 farP  = farH.Xyz / farH.W;
+
+        float planeZ = _scene[_selected].Transform.Depth;
+        Vector3 dir = farP - nearP;
+        if (MathF.Abs(dir.Z) < 1e-6f) return nearP.Xy;   // rază paralelă cu planul (nu apare la camera din șablon)
+        float t = (planeZ - nearP.Z) / dir.Z;
+        return (nearP + t * dir).Xy;
     }
 
     /// <summary>Tasta R: obiectele revin la transformările inițiale, camera la starea inițială.</summary>
