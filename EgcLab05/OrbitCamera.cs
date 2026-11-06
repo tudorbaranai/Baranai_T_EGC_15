@@ -35,6 +35,7 @@ public class OrbitCamera : Camera
     public float MouseSensitivity = 0.3f;      // grade pe pixel, la tragerea cu clic stânga
     public float KeyRotateSpeed = 90.0f;       // grade pe secundă, cu săgețile
     public float ZoomFactor = 1.1f;            // un pas al rotiței = distanța ÷ / × 1,1
+    public float TargetMoveSpeed = 3.0f;       // bonus: unități de lume pe secundă (W A S D mută ținta)
 
     private static readonly Vector3 WorldUp = Vector3.UnitY;
 
@@ -93,6 +94,30 @@ public class OrbitCamera : Camera
 
         Azimuth %= 360.0f;   // doar ca valorile afișate să rămână mici; cos / sin nu se schimbă
         Elevation = Math.Clamp(Elevation, -MaxElevation, MaxElevation);
+
+        // --- Bonus: W A S D mută ținta în planul orizontal ---------------------------------
+        // „Înainte” = direcția privirii proiectată pe orizontală (y = 0, normalizată), ca la mersul camerei FPS;
+        // „dreapta” = înainte × (0, 1, 0). Mișcarea este normalizată (pe diagonală nu e mai rapidă) și ×dt.
+        // Camera se mută împreună cu ținta (distanța și unghiurile rămân aceleași), deci imaginea „alunecă”.
+        Vector3 forward = Front;
+        forward.Y = 0.0f;
+        if (forward.LengthSquared > 1e-8f)
+        {
+            forward = Vector3.Normalize(forward);
+            Vector3 right = Vector3.Normalize(Vector3.Cross(forward, WorldUp));
+
+            Vector3 move = Vector3.Zero;
+            if (keyboard.IsKeyDown(Keys.W)) move += forward;
+            if (keyboard.IsKeyDown(Keys.S)) move -= forward;
+            if (keyboard.IsKeyDown(Keys.D)) move += right;
+            if (keyboard.IsKeyDown(Keys.A)) move -= right;
+
+            if (move.LengthSquared > 0.0f)
+            {
+                float speed = TargetMoveSpeed * (keyboard.IsKeyDown(Keys.LeftShift) ? 2.5f : 1.0f);
+                Target += Vector3.Normalize(move) * speed * dt;
+            }
+        }
 
         // --- 3. Rotița schimbă DISTANȚA (nu FOV-ul) ------------------------------------------
         // Prin înmulțire (ca zoom-ul din laboratorul 4): rotița în sus apropie camera, în jos o depărtează,
