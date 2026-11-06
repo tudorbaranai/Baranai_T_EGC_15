@@ -176,10 +176,14 @@ public static class Shapes
                 float u = (float)j / slices;                      // 0 .. 1 în jurul sferei
                 float longitude = u * 2.0f * MathF.PI;            // 0° .. 360°
 
-                // TODO 5.4 (a): poziția vârfului (coordonate sferice -> carteziene, secțiunea 2.2)
-                float x = 0.0f;
-                float y = 0.0f;
-                float z = 0.0f;
+                // P3 (TODO 5.4 a): coordonate sferice -> carteziene (secțiunea 2.2). Vârful stă pe paralela de
+                //     rază r_p = R · cos φ (0 la poli, R la ecuator), la înălțimea y = R · sin φ.
+                //     Semnul minus de la z face ca u să crească în sens trigonometric privind de deasupra,
+                //     deci triunghiurile sunt parcurse în sens trigonometric privite din afară (C nu le elimină).
+                float parallelRadius = radius * MathF.Cos(latitude);
+                float x = parallelRadius * MathF.Cos(longitude);
+                float y = radius * MathF.Sin(latitude);
+                float z = -parallelRadius * MathF.Sin(longitude);
 
                 SetVertex(vertices, i * columns + j, x, y, z, u, v, 0.35f);
             }
@@ -196,10 +200,22 @@ public static class Shapes
                 uint topLeft = bottomLeft + (uint)columns;
                 uint topRight = topLeft + 1;
 
-                // TODO 5.4 (b): cele două triunghiuri ale celulei, în sens trigonometric privite din afară
-                //               (6 indici: indices[k++] = ...)
+                // P3 (TODO 5.4 b): cele două triunghiuri ale celulei, în sens trigonometric privite din afară:
+                //     bottomLeft-bottomRight-topRight și topRight-topLeft-bottomLeft.
+                indices[k++] = bottomLeft;
+                indices[k++] = bottomRight;
+                indices[k++] = topRight;
+
+                indices[k++] = topRight;
+                indices[k++] = topLeft;
+                indices[k++] = bottomLeft;
             }
         }
+
+        // P3: sfera mare (32 de felii, 16 benzi) are (16 + 1) · (32 + 1) = 561 de vârfuri și 16 · 32 · 2 = 1024
+        //     de triunghiuri. Dintre ele, 2 · 32 = 64 nu se văd: în fiecare celulă de lângă un pol (rândul de jos
+        //     și cel de sus), unul dintre triunghiuri are două vârfuri în același punct (polul, unde r_p = 0),
+        //     deci are arie zero. Le păstrăm ca toate celulele să fie tratate la fel.
 
         return new Mesh(vertices, indices);
     }
