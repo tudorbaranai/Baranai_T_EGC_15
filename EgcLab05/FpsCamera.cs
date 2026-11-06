@@ -23,7 +23,20 @@ public class FpsCamera : Camera
     public float Pitch { get; private set; }
 
     /// <summary>Zbor liber (true) sau mers pe sol (false). Comutat cu tasta G (facultativ, TODO 5.7).</summary>
-    public bool FreeFly { get; set; }
+    public bool FreeFly
+    {
+        get => _freeFly;
+        set
+        {
+            // P6: la revenirea din zbor liber în modul mers, camera „aterizează” la înălțimea ochilor (1,70).
+            if (_freeFly && !value)
+            {
+                _position.Y = StartPosition.Y;
+            }
+            _freeFly = value;
+        }
+    }
+    private bool _freeFly;
 
     // Baza camerei: trei vectori unitate, perpendiculari doi câte doi (secțiunea 5).
     private Vector3 _front = -Vector3.UnitZ;
@@ -93,7 +106,8 @@ public class FpsCamera : Camera
         // P5 (1): în modul mers, „înainte” este Front proiectat pe planul orizontal (y = 0, apoi normalizat):
         //     privind în jos și apăsând W, mergeți înainte, nu intrați în podea, iar înălțimea rămâne 1,70.
         //     Pitch-ul fiind limitat la ±89°, componenta orizontală a lui Front nu ajunge niciodată la zero.
-        Vector3 forward = Vector3.Normalize(new Vector3(_front.X, 0.0f, _front.Z));
+        // P6 (TODO 5.7, facultativ): în zbor liber, „înainte” este chiar Front (se urcă / coboară privind în sus / jos).
+        Vector3 forward = FreeFly ? _front : Vector3.Normalize(new Vector3(_front.X, 0.0f, _front.Z));
 
         // P5 (2): suma direcțiilor tastelor apăsate. _right este deja orizontal (Front × WorldUp).
         Vector3 move = Vector3.Zero;
@@ -101,6 +115,13 @@ public class FpsCamera : Camera
         if (keyboard.IsKeyDown(Keys.S)) move -= forward;
         if (keyboard.IsKeyDown(Keys.D)) move += _right;
         if (keyboard.IsKeyDown(Keys.A)) move -= _right;
+
+        // P6: în zbor liber, Space urcă și Ctrl stânga coboară, pe axa Y a lumii (WorldUp), nu pe Up-ul camerei.
+        if (FreeFly)
+        {
+            if (keyboard.IsKeyDown(Keys.Space))       move += WorldUp;
+            if (keyboard.IsKeyDown(Keys.LeftControl)) move -= WorldUp;
+        }
 
         // P5 (3): normalizarea, ca pe diagonală (W + D) viteza să nu fie de √2 ori mai mare.
         if (move.LengthSquared > 0.0f)
