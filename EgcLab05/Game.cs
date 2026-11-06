@@ -15,7 +15,7 @@ public class Game : GameWindow
 {
     // Camerele (nu depind de OpenGL, pot fi create imediat).
     private readonly FpsCamera _fps = new();
-    // TEMA: aici se adaugă camera orbită (private readonly OrbitCamera _orbit = new();)
+    private readonly OrbitCamera _orbit = new();   // TEMA: camera orbită (tasta V)
     private Camera _active;                        // camera folosită la desenare
 
     // Obiectele care folosesc OpenGL se creează în OnLoad (abia atunci există contextul OpenGL).
@@ -65,7 +65,7 @@ public class Game : GameWindow
 
         GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
         _fps.Resize(ClientSize.X, ClientSize.Y);
-        // TEMA: și camera orbită trebuie să afle raportul de aspect
+        _orbit.Resize(ClientSize.X, ClientSize.Y);   // TEMA: și camera orbită află raportul de aspect
 
         _shader = Shader.FromFiles("Shaders/shader.vert", "Shaders/shader.frag");
 
@@ -149,7 +149,7 @@ public class Game : GameWindow
 
         GL.Viewport(0, 0, e.Width, e.Height);
         _fps.Resize(e.Width, e.Height);     // proiecția se adaptează la noul raport de aspect
-        // TEMA: și camera orbită trebuie să afle noul raport de aspect
+        _orbit.Resize(e.Width, e.Height);   // TEMA: ambele camere, ca să aibă aspectul corect și după comutare
         _titleDirty = true;
     }
 
@@ -242,11 +242,33 @@ public class Game : GameWindow
             ConsolePanel.PrintMessage(CursorState == CursorState.Grabbed ? "cursor capturat" : "cursor eliberat");
         }
 
-        // TEMA: tasta V comută între camera FPS și camera orbită (vezi textul laboratorului).
+        // TEMA: tasta V comută între camera FPS și camera orbită.
         if (kb.IsKeyPressed(Keys.V))
         {
-            ConsolePanel.PrintMessage("camera orbită nu este încă implementată (tema)");
+            SwitchCamera();
         }
+    }
+
+    /// <summary>
+    /// TEMA: comută câmpul _active între cele două camere. În modul orbită cursorul este normal (se trage cu
+    /// clic stânga), în modul FPS este captiv. După comutare, prima deplasare a mouse-ului se ignoră.
+    /// </summary>
+    private void SwitchCamera()
+    {
+        if (_active == _fps)
+        {
+            _active = _orbit;
+            CursorState = CursorState.Normal;
+        }
+        else
+        {
+            _active = _fps;
+            CursorState = CursorState.Grabbed;
+        }
+
+        _ignoreMouseOnce = true;
+        _titleDirty = true;   // titlul ferestrei arată camera activă
+        ConsolePanel.PrintMessage($"cameră activă: {_active.Name}");
     }
 
     private void Toggle(ref bool flag, string name)
