@@ -29,6 +29,10 @@ public class Game : GameWindow
     private Vector2? _pivot;
     private Mesh _pivotMarker = null!;
 
+    // T5 (facultativ): satelitul obiectului selectat și unghiul lui pe orbită (în grade).
+    private Mesh _satellite = null!;
+    private float _orbitAngle;
+
     // Contoare afișate în titlul ferestrei.
     private readonly string _baseTitle;
     private double _secondTimer;
@@ -76,6 +80,9 @@ public class Game : GameWindow
 
         // T4: marcajul pivotului (un cerc mic); nu face parte din _scene, deci nu poate fi selectat cu Tab.
         _pivotMarker = Shapes.RegularPolygon(16, 0.05f);
+
+        // T5: satelitul este un triunghi; nu face parte din _scene (nu se selectează cu Tab, nu are Transform2D).
+        _satellite = Shapes.Triangle();
     }
 
     /// <summary>Adaugă un obiect în scenă și reține transformarea lui inițială (pentru tasta R).</summary>
@@ -185,6 +192,10 @@ public class Game : GameWindow
             sel.Transform.Rotation += angle;
         }
 
+        // T5: o rotație completă (360°) la 4 secunde = 90° pe secundă, independent de numărul de cadre.
+        const float orbitPeriod = 4.0f;   // secunde pentru o rotație completă
+        _orbitAngle = (_orbitAngle + 360.0f / orbitPeriod * dt) % 360.0f;
+
         // --- Camera: tastatura și rotița (secțiunea 6.2) -----------------------------
 
         float camSpeed = 3.0f / _camera.Zoom;                    // unități de lume pe secundă
@@ -249,7 +260,25 @@ public class Game : GameWindow
             _pivotMarker.Draw();
         }
 
-        // TODO (T5, facultativ): satelitul obiectului selectat
+        // T5 (facultativ): satelitul obiectului selectat (nota din secțiunea 5.3: modelCopil = localCopil * modelParinte).
+        //     Transformarea locală, față de obiectul selectat: scalare cu 0,3, translație cu (1,2; 0), apoi rotație
+        //     cu unghiul orbitei (rotația DUPĂ translație îl duce pe un cerc de rază 1,2 în jurul centrului părintelui,
+        //     ca în Fig. 3b). Înmulțită cu matricea model a părintelui, satelitul urmează automat obiectul selectat
+        //     când acesta este mutat, rotit sau scalat; cu Tab, „părintele” devine noul obiect selectat.
+        // T5: când obiectul selectat este scalat, orbita se scalează și ea: raza devine 1,2 · scara părintelui
+        //     (la X orbita se lărgește, la Z se strânge), iar satelitul însuși devine 0,3 · scara părintelui.
+        //     Motivul: matricea părintelui (care conține scalarea lui) se aplică DUPĂ transformarea locală, deci
+        //     asupra tuturor punctelor satelitului, inclusiv asupra translației (1,2; 0) care dă raza orbitei.
+        //     Distanța 1,2 este măsurată în unitățile părintelui, nu în unitățile lumii. La fel, rotația părintelui
+        //     (Q / E) se adună la unghiul orbitei, iar dacă scara ar fi neuniformă orbita ar deveni o elipsă.
+        Matrix4 satelliteLocal = Matrix4.CreateScale(0.3f)
+                               * Matrix4.CreateTranslation(1.2f, 0.0f, 0.0f)
+                               * Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(_orbitAngle));
+        Matrix4 satelliteModel = satelliteLocal * _scene[_selected].Transform.ModelMatrix;
+
+        _shader.SetMatrix4("uModel", satelliteModel);
+        _shader.SetColor("uTint", Color4.White);
+        _satellite.Draw();
 
         // 5. Afișăm cadrul terminat: back buffer <-> front buffer.
         SwapBuffers();
@@ -263,6 +292,7 @@ public class Game : GameWindow
             obj.Dispose();
         }
         _pivotMarker.Dispose();
+        _satellite.Dispose();
         _shader.Dispose();
 
         base.OnUnload();
