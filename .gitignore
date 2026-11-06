@@ -1,0 +1,14 @@
+# Build output (generated at build)
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.rsuser
+
+# macOS
+.DS_Store
