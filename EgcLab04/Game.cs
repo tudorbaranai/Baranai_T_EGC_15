@@ -25,6 +25,10 @@ public class Game : GameWindow
     private int _selected;            // indexul obiectului selectat în _scene (tasta Tab)
     private bool _wireframe;          // contur (true) sau plin (false)
 
+    // T4 (facultativ): pivotul stabilit cu clic dreapta (null = încă nestabilit) și un marcaj mic desenat în el.
+    private Vector2? _pivot;
+    private Mesh _pivotMarker = null!;
+
     // Contoare afișate în titlul ferestrei.
     private readonly string _baseTitle;
     private double _secondTimer;
@@ -69,6 +73,9 @@ public class Game : GameWindow
                   new Transform2D { Position = new Vector2(2.0f, 1.0f) });
         AddObject("cerc", Shapes.RegularPolygon(64, 0.5f),
                   new Transform2D { Position = new Vector2(0.8f, -0.6f), Depth = 2.0f });
+
+        // T4: marcajul pivotului (un cerc mic); nu face parte din _scene, deci nu poate fi selectat cu Tab.
+        _pivotMarker = Shapes.RegularPolygon(16, 0.05f);
     }
 
     /// <summary>Adaugă un obiect în scenă și reține transformarea lui inițială (pentru tasta R).</summary>
@@ -153,7 +160,30 @@ public class Game : GameWindow
             sel.Transform.Position = ScreenToWorld(MouseState.Position);
         }
 
-        // TODO (T4, facultativ): clic dreapta = pivot; tasta P ținută = rotație în jurul pivotului
+        // T4 (facultativ): clic dreapta stabilește pivotul în punctul din lume aflat sub cursor (ScreenToWorld din T3).
+        if (MouseState.IsButtonPressed(MouseButton.Right))
+        {
+            _pivot = ScreenToWorld(MouseState.Position);
+            Console.WriteLine($"Pivot: ({_pivot.Value.X:F2}; {_pivot.Value.Y:F2})");
+        }
+
+        // T4: cât timp P este ținută, obiectul selectat se rotește în jurul pivotului cu 90° pe secundă.
+        //     Poziția se rotește în jurul pivotului cu matricea din secțiunea 5.2, T(−p) · R(θ) · T(p),
+        //     iar unghiul propriu crește cu același θ, astfel încât obiectul „privește” mereu spre pivot
+        //     în același fel (ca Luna față de Pământ: îi arată mereu aceeași față).
+        if (_pivot is Vector2 pivot && KeyboardState.IsKeyDown(Keys.P))
+        {
+            const float pivotSpeed = 90.0f;   // grade pe secundă
+            float angle = pivotSpeed * dt;
+
+            Matrix4 aroundPivot = Matrix4.CreateTranslation(-pivot.X, -pivot.Y, 0.0f)
+                                * Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(angle))
+                                * Matrix4.CreateTranslation(pivot.X, pivot.Y, 0.0f);
+
+            Vector4 p = new Vector4(sel.Transform.Position.X, sel.Transform.Position.Y, 0.0f, 1.0f) * aroundPivot;
+            sel.Transform.Position = p.Xy;
+            sel.Transform.Rotation += angle;
+        }
 
         // --- Camera: tastatura și rotița (secțiunea 6.2) -----------------------------
 
@@ -211,6 +241,14 @@ public class Game : GameWindow
             obj.Mesh.Draw();
         }
 
+        // T4: marcajul pivotului, desenat alb, la adâncimea obiectului selectat (pe același plan cu el).
+        if (_pivot is Vector2 pv)
+        {
+            _shader.SetMatrix4("uModel", Matrix4.CreateTranslation(pv.X, pv.Y, _scene[_selected].Transform.Depth));
+            _shader.SetColor("uTint", Color4.White);
+            _pivotMarker.Draw();
+        }
+
         // TODO (T5, facultativ): satelitul obiectului selectat
 
         // 5. Afișăm cadrul terminat: back buffer <-> front buffer.
@@ -224,6 +262,7 @@ public class Game : GameWindow
         {
             obj.Dispose();
         }
+        _pivotMarker.Dispose();
         _shader.Dispose();
 
         base.OnUnload();
@@ -279,6 +318,7 @@ public class Game : GameWindow
             _scene[i].Transform = _initialTransforms[i].Clone();
         }
         _camera.Reset();
+        _pivot = null;   // T4: și pivotul se șterge
     }
 
     /// <summary>
