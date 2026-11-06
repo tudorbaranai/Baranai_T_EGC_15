@@ -157,6 +157,20 @@ public class FpsCamera : Camera
         _up = Vector3.Normalize(Vector3.Cross(_right, _front));
     }
 
+    /// <summary>
+    /// Bonus (comutare fără „salt”, orbită → FPS): așază camera în <paramref name="position"/>, privind pe direcția
+    /// <paramref name="front"/>. Yaw și pitch se calculează cu formulele inverse ale lui front (secțiunea 5.2):
+    /// pitch = asin(front.y), yaw = atan2(front.z, front.x).
+    /// </summary>
+    public void PlaceAt(Vector3 position, Vector3 front)
+    {
+        front = Vector3.Normalize(front);
+        _position = position;
+        Pitch = Math.Clamp(MathHelper.RadiansToDegrees(MathF.Asin(front.Y)), -MaxPitch, MaxPitch);
+        Yaw = MathHelper.RadiansToDegrees(MathF.Atan2(front.Z, front.X));
+        UpdateVectors();
+    }
+
     public override void Reset()
     {
         _position = StartPosition;

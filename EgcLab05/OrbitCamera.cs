@@ -104,6 +104,22 @@ public class OrbitCamera : Camera
         }
     }
 
+    /// <summary>
+    /// Bonus (comutare fără „salt”, FPS → orbită): camera orbită preia exact imaginea unei camere aflate în
+    /// <paramref name="eye"/> și care privește pe direcția <paramref name="front"/>. Ținta devine punctul aflat la
+    /// <paramref name="targetDistance"/> în fața ei, iar unghiurile se calculează din vectorul unitar țintă → cameră,
+    /// o = −front: elevația = asin(o.y), azimutul = atan2(o.z, o.x).
+    /// Verificare: țintă + distanță · o = eye + d · front − d · front = eye, deci poziția nu se schimbă.
+    /// </summary>
+    public void LookFrom(Vector3 eye, Vector3 front, float targetDistance)
+    {
+        Vector3 o = -Vector3.Normalize(front);
+        Target = eye - targetDistance * o;
+        Distance = targetDistance;
+        Elevation = Math.Clamp(MathHelper.RadiansToDegrees(MathF.Asin(o.Y)), -MaxElevation, MaxElevation);
+        Azimuth = MathHelper.RadiansToDegrees(MathF.Atan2(o.Z, o.X));
+    }
+
     public override void Reset()
     {
         Target = StartTarget;

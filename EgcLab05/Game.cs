@@ -16,6 +16,7 @@ public class Game : GameWindow
     // Camerele (nu depind de OpenGL, pot fi create imediat).
     private readonly FpsCamera _fps = new();
     private readonly OrbitCamera _orbit = new();   // TEMA: camera orbită (tasta V)
+    private const float OrbitTargetDistance = 5.0f; // bonus: la FPS → orbită, ținta este la 5 unități în fața camerei
     private Camera _active;                        // camera folosită la desenare
 
     // Obiectele care folosesc OpenGL se creează în OnLoad (abia atunci există contextul OpenGL).
@@ -255,13 +256,20 @@ public class Game : GameWindow
     /// </summary>
     private void SwitchCamera()
     {
+        // Bonus: comutarea fără „salt” al imaginii. Noua cameră preia poziția, direcția privirii și FOV-ul celei vechi.
         if (_active == _fps)
         {
+            // FPS → orbită: ținta = punctul aflat la distanța OrbitTargetDistance în fața camerei FPS.
+            _orbit.LookFrom(_fps.Position, _fps.Front, OrbitTargetDistance);
+            _orbit.FieldOfView = _fps.FieldOfView;
             _active = _orbit;
             CursorState = CursorState.Normal;
         }
         else
         {
+            // Orbită → FPS: camera FPS preia poziția camerei orbită și direcția spre țintă.
+            _fps.PlaceAt(_orbit.Position, _orbit.Front);
+            _fps.FieldOfView = _orbit.FieldOfView;
             _active = _fps;
             CursorState = CursorState.Grabbed;
         }
