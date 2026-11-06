@@ -125,8 +125,28 @@ public static class Shapes
                 new Vector3(h, -h, h), new Vector3(h, -h, -h), new Vector3(h, h, -h), new Vector3(h, h, h),
                 new Color4(1.0f, 0.2f, 0.2f, 1.0f));
 
-        // TODO 5.3: fețele 2..5. Pentru fiecare față, imaginați-vă că o priviți din afara cubului
-        //           și stabiliți direcțiile "dreapta" și "sus" (ca în comentariile de mai sus).
+        // P2 (TODO 5.3): fețele 2..5, fiecare cu colțurile stânga-jos, dreapta-jos, dreapta-sus, stânga-sus,
+        //     privind fața din afara cubului (sens trigonometric). Verificare: (b − a) × (c − b) dă normala exterioară.
+
+        // Fața 2: -X (stânga). Privită din -X: dreapta = +Z, sus = +Y.
+        AddFace(vertices, indices, 2,
+                new Vector3(-h, -h, -h), new Vector3(-h, -h, h), new Vector3(-h, h, h), new Vector3(-h, h, -h),
+                new Color4(0.2f, 1.0f, 1.0f, 1.0f));   // cyan
+
+        // Fața 3: -Z (spate). Privită din -Z: dreapta = -X, sus = +Y.
+        AddFace(vertices, indices, 3,
+                new Vector3(h, -h, -h), new Vector3(-h, -h, -h), new Vector3(-h, h, -h), new Vector3(h, h, -h),
+                new Color4(1.0f, 1.0f, 0.2f, 1.0f));   // galben
+
+        // Fața 4: +Y (sus). Privită de deasupra: dreapta = +X, sus = -Z.
+        AddFace(vertices, indices, 4,
+                new Vector3(-h, h, h), new Vector3(h, h, h), new Vector3(h, h, -h), new Vector3(-h, h, -h),
+                new Color4(0.2f, 1.0f, 0.2f, 1.0f));   // verde
+
+        // Fața 5: -Y (jos). Privită de dedesubt: dreapta = +X, sus = +Z.
+        AddFace(vertices, indices, 5,
+                new Vector3(-h, -h, -h), new Vector3(h, -h, -h), new Vector3(h, -h, h), new Vector3(-h, -h, h),
+                new Color4(1.0f, 0.2f, 1.0f, 1.0f));   // magenta
 
         return new Mesh(vertices, indices);
     }

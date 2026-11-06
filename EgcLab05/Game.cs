@@ -24,7 +24,7 @@ public class Game : GameWindow
     private readonly List<SceneObject> _scene = new();
 
     // Starea de desenare (comutată de la tastatură).
-    private bool _depthTest;           // tasta Z (după TODO 5.2 îl puteți porni de la început: = true)
+    private bool _depthTest = true;    // tasta Z (P2: după TODO 5.2 pornit de la început)
     private bool _faceCulling;         // tasta C
     private bool _wireframe;           // tasta F
 
@@ -259,8 +259,12 @@ public class Game : GameWindow
 
         // 1. Ștergem imaginea veche: bufferul de culoare și bufferul de adâncime.
         GL.ClearColor(0.12f, 0.14f, 0.18f, 1.0f);
-        // TODO 5.2: ștergerea bufferului de adâncime la fiecare cadru
-        GL.Clear(ClearBufferMask.ColorBufferBit);
+        // P2 (TODO 5.2): se șterge și bufferul de adâncime la fiecare cadru (îl umple cu 1 = planul far).
+        // P2: de ce se strica imaginea la Z fără această linie: bufferul de adâncime păstra adâncimile din
+        //     cadrele anterioare. Testul GL_LESS desenează un fragment doar dacă e mai aproape decât valoarea
+        //     memorată, deci după primul cadru aproape nimic nu mai trecea testul (imaginea „îngheța” sau
+        //     rămânea doar fundalul), iar obiectele în mișcare lăsau urme.
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
         // 2. Starea de rasterizare.
         SetCapability(EnableCap.DepthTest, _depthTest);   // fragmentul mai apropiat câștigă
