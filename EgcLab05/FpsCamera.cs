@@ -60,10 +60,15 @@ public class FpsCamera : Camera
     {
         // --- 1. Orientarea: mouse-ul modifică yaw și pitch -------------------------
 
-        // TODO 5.5 (a): deplasarea pe orizontală modifică yaw, cea pe verticală modifică pitch.
-        //               Atenție: pe ecran Y crește în jos, iar pitch pozitiv înseamnă privire în sus.
-        //               Apoi limitați pitch-ul la intervalul [-MaxPitch, MaxPitch].
+        // P4 (TODO 5.5 a): deplasarea pe orizontală modifică yaw, cea pe verticală modifică pitch (grade pe pixel).
+        //     Pe ecran Y crește în jos, iar pitch pozitiv înseamnă privire în sus, deci pentru pitch semnul se inversează.
+        Yaw += mouseDelta.X * MouseSensitivity;
+        Pitch -= mouseDelta.Y * MouseSensitivity;
 
+        // P4: pitch-ul se limitează la ±89° (secțiunea 5.3). La ±90°, Front devine paralel cu WorldUp, produsul
+        //     vectorial Front × WorldUp devine (aproape) nul și nu mai poate fi normalizat: Right și Up devin
+        //     nedefinite / instabile, iar imaginea se răstoarnă sau se rotește haotic (experimentul cu MaxPitch = 90).
+        Pitch = Math.Clamp(Pitch, -MaxPitch, MaxPitch);
 
         UpdateVectors();
 
@@ -94,12 +99,19 @@ public class FpsCamera : Camera
     /// </summary>
     private void UpdateVectors()
     {
-        // TODO 5.5 (b): Front din yaw și pitch (formula din secțiunea 5.2), apoi Right și Up
-        //               prin produse vectoriale; toți trei normalizați.
-        //               Până atunci camera privește mereu spre -Z.
-        _front = -Vector3.UnitZ;
-        _right = Vector3.UnitX;
-        _up = Vector3.UnitY;
+        // P4 (TODO 5.5 b): front = (cos yaw · cos pitch, sin pitch, sin yaw · cos pitch), cu unghiurile în radiani.
+        //     La yaw = −90°, pitch = 0° rezultă (0, 0, −1): camera privește spre −Z, ca la pornire.
+        float yaw = MathHelper.DegreesToRadians(Yaw);
+        float pitch = MathHelper.DegreesToRadians(Pitch);
+
+        _front = Vector3.Normalize(new Vector3(
+            MathF.Cos(yaw) * MathF.Cos(pitch),
+            MathF.Sin(pitch),
+            MathF.Sin(yaw) * MathF.Cos(pitch)));
+
+        // P4: baza camerei prin produse vectoriale (secțiunea 5.1): right = front × worldUp, up = right × front.
+        _right = Vector3.Normalize(Vector3.Cross(_front, WorldUp));
+        _up = Vector3.Normalize(Vector3.Cross(_right, _front));
     }
 
     public override void Reset()
