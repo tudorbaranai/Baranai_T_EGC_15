@@ -50,8 +50,9 @@ public sealed class Tween
     {
         get
         {
-            // TODO 6.2 (b): Vector3.Lerp(From, To, ...), cu Ease aplicat pe Progress
-            return From;   // provizoriu: obiectul stă pe loc
+            // P2 (TODO 6.2 b): lerp(From, To, Ease(Progress)). Easing-ul „modelează” fracțiunea t înainte
+            //     de interpolare: toate cuburile pleacă și ajung odată, dar cu viteze diferite pe drum.
+            return Vector3.Lerp(From, To, Ease(Progress));
         }
     }
 
