@@ -146,9 +146,13 @@ public sealed class LabScene : Scene
         }
         _colorA.Update(dt);
         _colorB.Update(dt);
-        // TODO 7.3 (b): la fiecare cadru, copiați valorile tween-urilor (_colorA.Value, _colorB.Value)
-        //              în uniformele uColorA și uColorB ale materialului _gradient
-        //              (după modelul paletei de mai jos).
+        // P2 (TODO 7.3 b): tween-ul doar CALCULEAZĂ culoarea; o copiem în uniforme la fiecare cadru.
+        // P2 (întrebare): valorile din Load sunt doar culorile de pornire. Uniforma reține o valoare fixă
+        //     până o setăm din nou, iar tween-ul produce în fiecare cadru o culoare nouă (tranziția de 0,8 s),
+        //     deci, setate doar în Load, uniformele n-ar afla niciodată de Space. În plus, după o reîncărcare
+        //     a shaderului (P1), programul nou are toate uniformele 0: trimise la fiecare cadru, revin imediat.
+        _gradient.Uniforms.Set("uColorA", _colorA.Value);
+        _gradient.Uniforms.Set("uColorB", _colorB.Value);
 
         // P5: C trece la paleta următoare; cele patru uniforme vec3 se schimbă lin.
         if (input.WasPressed(NextPalette))

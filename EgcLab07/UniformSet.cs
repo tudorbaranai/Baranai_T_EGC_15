@@ -51,8 +51,19 @@ public sealed class UniformSet
                 case Matrix4 m:
                     shader.SetMatrix4(name, m);
                     break;
-                // TODO 7.2: tratați și tipurile Vector2 (SetVector2), Vector3 (SetVector3)
-                //           și bool (SetInt, cu 1 pentru true și 0 pentru false), după modelul de mai sus.
+                // P2 (TODO 7.2): funcția OpenGL trebuie să corespundă tipului din GLSL (tabelul 3.2):
+                //     vec2 -> GL.Uniform2, vec3 -> GL.Uniform3. Un tip greșit dă GL_INVALID_OPERATION,
+                //     iar valoarea nu se schimbă (fără niciun mesaj).
+                case Vector2 v2:
+                    shader.SetVector2(name, v2);
+                    break;
+                case Vector3 v3:
+                    shader.SetVector3(name, v3);
+                    break;
+                // P2 (TODO 7.2): bool nu are o funcție GL.Uniform proprie: se trimite ca int, 1 / 0.
+                case bool b:
+                    shader.SetInt(name, b ? 1 : 0);
+                    break;
                 default:
                     if (Unsupported.Add(value.GetType()))
                     {
