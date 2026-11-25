@@ -18,26 +18,32 @@ out vec4 FragColor;
 // Dungi verticale: jumatate din fiecare celula A, jumatate B.
 float stripes(vec2 p)
 {
-   // TODO 7.4 (a): pozitia in celula este fract(p.x), in [0, 1);
-   //               intoarceti 0 in prima jumatate si 1 in a doua: step(0.5, ...).
-   return 0.0;
+    // P3 (TODO 7.4 a): fract(p.x) = pozitia in celula, la fel in toate celulele; step(0.5, x) da 0 in
+    // prima jumatate a celulei si 1 in a doua: o dunga A si o dunga B pe fiecare celula.
+    // P3 (intrebare): la uScale = 20 o dunga are 1/40 din panou, adica doar cativa pixeli. step da o margine
+    // "dura" (sectiunea 6.2): fiecare pixel este fie A, fie B, deci o dunga de 3,5 pixeli apare ca 3 sau 4
+    // pixeli, dupa cum cade fata de grila de pixeli (aliasing). Unele dungi par mai groase decat altele;
+    // cu smoothstep pe latimea unui pixel (fwidth) marginile ar fi netede si dungile egale.
+    return step(0.5, fract(p.x));
 }
 
 // Tabla de sah: celulele alterneaza pe ambele axe.
 float checker(vec2 p)
 {
-   // TODO 7.4 (b): floor(p.x) si floor(p.y) = indicii celulei (coloana, randul);
-   //               suma lor este para sau impara: mod(..., 2.0) da 0 sau 1.
-   return 0.0;
+    // P3 (TODO 7.4 b): floor = indicii celulei (coloana, randul). Suma lor creste cu 1 la fiecare pas,
+    // pe orice axa, deci paritatea ei alterneaza ca pe o tabla de sah: mod(suma, 2) = 0 sau 1.
+    // (mod din GLSL are semnul impartitorului, deci rezultatul este corect si pentru indici negativi.)
+    return mod(floor(p.x) + floor(p.y), 2.0);
 }
 
 // Grila: linii subtiri la marginea stanga si la marginea de jos a fiecarei celule.
 float gridLines(vec2 p)
 {
-   // TODO 7.4 (c): vec2 f = fract(p);  punctul este pe o linie daca f.x < uLineWidth SAU f.y < uLineWidth.
-   //               Fara if: step(uLineWidth, f.x) este 1 in afara liniei verticale (la fel pentru y),
-   //               deci 1.0 - step(uLineWidth, f.x) * step(uLineWidth, f.y) este 1 pe linii.
-   return 0.0;
+    // P3 (TODO 7.4 c): f = pozitia in celula. step(w, f.x) = 1 in afara liniei verticale, step(w, f.y) = 1
+    // in afara celei orizontale; produsul lor este 1 doar in afara AMBELOR (un "SI" fara if), iar 1 - produs
+    // este 1 pe oricare linie (un "SAU").
+    vec2 f = fract(p);
+    return 1.0 - step(uLineWidth, f.x) * step(uLineWidth, f.y);
 }
 
 void main()
