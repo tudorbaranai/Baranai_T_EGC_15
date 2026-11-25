@@ -61,14 +61,32 @@ public sealed class PlayerController
         p.Z = Math.Clamp(p.Z + direction.Y * Speed * dt, _min.Y, _max.Y);
 
         // 2. Saltul încărcat: apăsare -> ținere -> eliberare.
-        // TODO 6.5:
-        //   (a) pe sol, la APĂSAREA acțiunii Jump: _charging = true și _charge = 0;
-        //   (b) cât timp _charging și acțiunea este ȚINUTĂ: _charge crește cu dt / ChargeTime, cel mult 1;
-        //   (c) la ELIBERARE (dacă _charging): _verticalSpeed = Lerp(MinJumpSpeed, MaxJumpSpeed, _charge),
-        //       apoi _charging = false și _charge = 0.
+        // P4 (TODO 6.5 a): APĂSAREA pornește încărcarea, dar doar pe sol (altfel cubul ar sări din nou în aer).
+        if (OnGround && input.WasPressed(Actions.Jump))
+        {
+            _charging = true;
+            _charge = 0.0f;
+        }
 
+        // P4 (TODO 6.5 b): cât timp tasta este ȚINUTĂ, încărcarea crește cu dt / ChargeTime (0,8 s = plin).
+        //     Folosim dt (timpul de joc): în pauză încărcarea stă pe loc, ca toate celelalte animații.
+        if (_charging && input.IsDown(Actions.Jump))
+        {
+            _charge = MathF.Min(_charge + dt / ChargeTime, 1.0f);
+        }
 
-
+        // P4 (TODO 6.5 c): ELIBERAREA declanșează saltul: viteza inițială între 4 (apăsare scurtă) și 11
+        //     (încărcare completă). Înălțimea maximă este v₀² / 2g: 0,4 unități, respectiv ≈ 3 unități.
+        // P4 (întrebare): saltul pornește la WasReleased și nu la !IsDown pentru că !IsDown este adevărată
+        //     în TOATE cadrele în care tasta e liberă (de exemplu și înainte de orice apăsare), deci am avea
+        //     nevoie de încă o variabilă ca să știm că tocmai s-a eliberat; WasReleased este adevărată într-un
+        //     singur cadru, exact la tranziția apăsat -> liber, deci saltul se declanșează o singură dată.
+        if (_charging && input.WasReleased(Actions.Jump))
+        {
+            _verticalSpeed = Easing.Lerp(MinJumpSpeed, MaxJumpSpeed, _charge);
+            _charging = false;
+            _charge = 0.0f;
+        }
         // 3. Gravitația (metoda Euler semi-implicită): întâi viteza, apoi poziția.
         if (!OnGround || _verticalSpeed > 0.0f)
         {
