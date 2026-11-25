@@ -15,10 +15,13 @@ Pe branch-ul `main` se află doar acest index.
 |--------|-----------|----------------------|--------|----------|
 | [`tema04`](https://github.com/tudorbaranai/Baranai_T_EGC_15/tree/tema04) | #04 – transformări 2D, matricele model / view / projection, tastatura și mouse-ul | `EgcLab04/` | 07.11.2026, 20:00 | T1, T2, T3 (obligatorii), T4, T5 (facultative) |
 | [`tema05`](https://github.com/tudorbaranai/Baranai_T_EGC_15/tree/tema05) | #05 – mesh procedural, testul de adâncime, camera FPS și FOV | `EgcLab05/` | 14.11.2026, 12:00 | P1–P5, P6–P7 (facultative), tema: camera orbită (tasta V) + ambele bonusuri |
+| [`tema06`](https://github.com/tudorbaranai/Baranai_T_EGC_15/tree/tema06) | #06 – animații bazate pe timp (ceas, easing, tween, cadre-cheie), input prin acțiuni | `EgcLab06/` | 21.11.2026, 12:00 | P1–P4, P5 (facultativ), tema: varianta B – evită obstacolele (Tab) + bonus |
+| [`tema07`](https://github.com/tudorbaranai/Baranai_T_EGC_15/tree/tema07) | #07 – shadere GLSL editabile, valori uniforme, culori procedurale | `EgcLab07/` | 01.12.2026, 20:00 | P1–P5, P6 (facultativ), tema: varianta B – bara de viață și scutul (Tab) + bonus |
 
 ## Convenții respectate
 
 - Fișierul `Program.cs` din fiecare proiect are pe prima linie un comentariu single-line cu adresa de e-mail de mai sus.
+- De la laboratorul 06, fișierul scenei temei (folderul `Teme/`) are pe primul rând varianta aleasă.
 - Justificările cerute de teme sunt scrise ca comentarii în cod, lângă linia la care se referă, începând cu numărul temei (de exemplu `// T1: ...`, `// P2: ...`).
 - Câte un commit pentru fiecare temă / problemă, cu mesajul începând cu numărul ei (de exemplu `T1: ...`).
 
@@ -35,4 +38,4 @@ cd Baranai_T_EGC_15/EgcLab04
 dotnet run
 ```
 
-Pentru tema 05 se folosește `-b tema05` și folderul `EgcLab05`.
+Pentru celelalte teme se folosește branch-ul și folderul corespunzător (de exemplu `-b tema07` și `EgcLab07`).
