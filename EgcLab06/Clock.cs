@@ -32,10 +32,19 @@ public sealed class Clock
     {
         RealDeltaTime = (float)realSeconds;
 
-        // TODO 6.1: timpul de joc
-        //   1. limitați pasul real la MaxDelta (Math.Min / MathF.Min);
-        //   2. în pauză pasul de joc este 0, altfel este pasul limitat înmulțit cu TimeScale.
-        DeltaTime = RealDeltaTime;   // provizoriu: timpul de joc = timpul real
+        // P1 (TODO 6.1 - 1): limităm pasul real la MaxDelta = 0,1 s. După o blocare (B = 0,5 s) jocul
+        //     „pierde” 0,4 s, dar nimic nu sare: un obiect cu 10 unități/s avansează cel mult 1 unitate pe cadru.
+        float limited = MathF.Min(RealDeltaTime, MaxDelta);
+
+        // P1 (TODO 6.1 - 2): în pauză pasul de joc este 0 (animațiile stau), altfel pasul limitat × TimeScale
+        //     (0,5 = de două ori mai încet, 2 = de două ori mai repede). Pauza și slow motion-ul se fac
+        //     într-un singur loc, pentru că toate animațiile primesc doar DeltaTime.
+        DeltaTime = Paused ? 0.0f : limited * TimeScale;
+
+        // P1 (întrebare): fără limitare, un obiect care cade sub gravitație ar primi într-un singur cadru
+        //     v -= g · 0,5 și y += v · 0,5: ar coborî brusc mult (de exemplu ar trece prin podea sau printr-un
+        //     obstacol fără să-l „atingă”, fiindcă între două cadre nu se testează nimic) și ar părea că se
+        //     zmucește; în plus, integrarea Euler devine mult mai imprecisă la un pas mare.
 
         TotalTime += DeltaTime;
     }
