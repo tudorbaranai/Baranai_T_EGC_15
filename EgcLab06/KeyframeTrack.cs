@@ -43,10 +43,19 @@ public sealed class KeyframeTrack
         if (_keys.Count == 0) return Vector3.Zero;
         if (_keys.Count == 1) return _keys[0];
 
-        // TODO 6.3 (secțiunea 4.2):
-        //   1. position = time / SecondsPerKey, adus în [0, Count) cu %   (de exemplu 1.5)
-        //   2. i = partea întreagă (cheia de plecare), u = partea fracționară (cât din drum)
-        //   3. Lerp între cheia i și cheia următoare ((i + 1) % Count), cu Ease aplicat pe u
-        return _keys[0];   // provizoriu: valoarea primei chei
+        // P3 (TODO 6.3 - 1): câte intervale au trecut. Cu % poziția rămâne în [0, Count): după ultima cheie
+        //     o luăm de la capăt (bucla). Pentru un timp negativ aducem restul înapoi în interval.
+        float position = time / SecondsPerKey % _keys.Count;
+        if (position < 0.0f) position += _keys.Count;
+
+        // P3 (TODO 6.3 - 2): partea întreagă = cheia de plecare, partea fracționară = cât din drumul dintre
+        //     cele două chei s-a parcurs (de exemplu 1.5 -> între cheia 1 și cheia 2, la jumătate).
+        int i = Math.Min((int)MathF.Floor(position), _keys.Count - 1);
+        float u = position - i;
+
+        // P3 (TODO 6.3 - 3): cheia următoare este (i + 1) % Count: după ultima urmează prima, deci bucla
+        //     se închide fără salt. Lerp cu easing-ul pistei aplicat pe u (EaseInOut = oprire în fiecare cheie).
+        int next = (i + 1) % _keys.Count;
+        return Vector3.Lerp(_keys[i], _keys[next], Ease(u));
     }
 }
