@@ -70,14 +70,31 @@ public sealed class Shader : IDisposable
     /// </summary>
     public bool Reload()
     {
-        // TODO 7.1: reîncărcarea programului (secțiunea 2.3)
-        //   1. construiți un program NOU din fișiere: if (!TryBuild(out int newHandle)) return false;
-        //      (la eroare, TryBuild a afișat deja mesajul, iar programul vechi rămâne activ);
-        //   2. ștergeți programul vechi (GL.DeleteProgram(Handle)), apoi Handle = newHandle; IsFallback = false;
-        //   3. locațiile uniformelor aparțin programului vechi: goliți _uniformLocations, _missing și _reported;
-        //   4. return true.
-        ConsolePanel.PrintMessage($"{Name}: reîncărcarea nu este scrisă încă (TODO 7.1).");
-        return false;
+        // P1 (TODO 7.1 - 1): întâi construim programul NOU. Dacă fișierele au o eroare, TryBuild a afișat
+        //     deja mesajul (cu rândul greșit), iar noi ne oprim aici: programul vechi rămâne activ.
+        if (!TryBuild(out int newHandle))
+        {
+            return false;
+        }
+
+        // P1 (TODO 7.1 - 2): abia acum, când știm că avem un program valid, îl ștergem pe cel vechi.
+        GL.DeleteProgram(Handle);
+        Handle = newHandle;
+        IsFallback = false;
+
+        // P1 (TODO 7.1 - 3): locațiile uniformelor sunt ale programului vechi (în cel nou pot fi altele),
+        //     deci le uităm; vor fi cerute din nou la primul Set*. La fel, lista uniformelor lipsă.
+        //     Valorile nu se pierd: scena trimite uniformele la fiecare cadru.
+        _uniformLocations.Clear();
+        _missing.Clear();
+        _reported.Clear();
+
+        // P1 (întrebare): dacă am șterge programul vechi ÎNAINTE de a verifica noul program, la o greșeală
+        //     de sintaxă (de exemplu un ; lipsă) obiectele ar rămâne fără niciun program valid: Handle ar
+        //     indica un program șters / nelegat, GL.UseProgram ar da GL_INVALID_VALUE, iar obiectele n-ar mai
+        //     apărea (sau aplicația s-ar opri) până la corectare. Așa, eroarea doar se afișează, iar imaginea
+        //     rămâne cea de dinainte.
+        return true;
     }
 
     /// <summary>Adevărat dacă unul dintre fișiere a fost salvat după ultima compilare (pentru reîncărcarea automată).</summary>
