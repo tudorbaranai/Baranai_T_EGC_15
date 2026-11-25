@@ -36,9 +36,16 @@ public sealed class SceneObject
     {
         get
         {
-            // TODO 6.6* (facultativ): ModelMatrix * Parent.WorldMatrix, dacă există părinte.
-            // (În OpenTK matricele se înmulțesc în ordinea aplicării, de la stânga la dreapta.)
-            return Transform.ModelMatrix;   // provizoriu: părintele este ignorat
+            // P5* (TODO 6.6): World(copil) = Model(copil) · World(părinte). În OpenTK matricele se înmulțesc
+            //     în ordinea aplicării: întâi transformarea proprie (față de părinte), apoi a părintelui.
+            //     Recursiv: părintele își include la rândul lui părintele, până la rădăcină.
+            //     Ordinea inversă (Parent.WorldMatrix * ModelMatrix) ar roti planeta în jurul centrului ei,
+            //     nu în jurul soarelui.
+            // P5* (întrebare): dacă pivotul lunii devine copilul planetei, luna moștenește și rotația planetei
+            //     în jurul axei proprii (120°/s): orbita ei devine 150 + 120 = 270°/s, mult mai rapidă;
+            //     în plus, poziția pivotului (3.2, 0, 0) s-ar aplica de două ori (o dată prin planetă),
+            //     iar scalarea 0.45 a planetei ar micșora și orbita, și luna.
+            return Parent == null ? Transform.ModelMatrix : Transform.ModelMatrix * Parent.WorldMatrix;
         }
     }
 
