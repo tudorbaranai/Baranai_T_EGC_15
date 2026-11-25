@@ -28,13 +28,19 @@ void main()
     // Distanta fragmentului fata de centrul discului (0 in centru, ~0.5 la marginea panoului).
     float d = distance(vUV, uCenter);
 
-   // TODO 7.5 (a): discul (sectiunea 6.2). inside = 1 in interior, 0 in afara.
-   //   Incercati intai marginea "dura":   float inside = step(d, uRadius);
-   //   apoi marginea neteda:              1.0 - smoothstep(uRadius - uSoftness, uRadius + uSoftness, d)
-   float inside = 0.0;
-   // TODO 7.5 (b): undele (sectiunea 6.3): o sinusoida a distantei, deplasata in timp, adusa in [0, 1]:
-   //   0.5 + 0.5 * sin(6.2831853 * (d * uFrequency - uTime * uSpeed * 0.25))
-   float wave = 1.0;
+    // P4 (TODO 7.5 a): discul. Varianta "dura", step(d, uRadius), are margine in trepte (aliasing):
+    // fiecare pixel este complet in disc sau complet in afara. smoothstep face trecerea pe latimea
+    // 2 * uSoftness: 1 in interior, 0 in afara, o curba lina (EaseInOut) intre ele.
+    float inside = 1.0 - smoothstep(uRadius - uSoftness, uRadius + uSoftness, d);
+
+    // P4 (TODO 7.5 b): undele. O creasta este acolo unde argumentul sinusului este constant; cand uTime
+    // creste, d trebuie sa creasca si el, deci crestele se departeaza de centru. 0.5 + 0.5 * sin aduce
+    // rezultatul din [-1, 1] in [0, 1], ca sa poata fi folosit in mix. uTime = timpul de joc: P le opreste.
+    // P4 (intrebare 1): cu + in loc de -, crestele se misca spre centru (undele "vin" spre centru).
+    // P4 (intrebare 2): cu abs(vUV.x - uCenter.x) in loc de distance, "distanta" depinde doar de x: in loc
+    // de cercuri apar dungi verticale care pleaca spre stanga si spre dreapta, iar discul devine o banda
+    // verticala de latime 2 * uRadius.
+    float wave = 0.5 + 0.5 * sin(6.2831853 * (d * uFrequency - uTime * uSpeed * 0.25));
 
     vec3 ringColor = mix(uColorInside * 0.35, uColorInside, wave);
     vec3 color = mix(uColorOutside, ringColor, inside);
