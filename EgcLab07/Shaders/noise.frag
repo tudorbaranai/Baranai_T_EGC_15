@@ -23,11 +23,21 @@ float hash(vec2 p)
 // Zgomotul: valori aleatoare in colturile unei grile, interpolate lin intre ele.
 float valueNoise(vec2 p)
 {
-   // TODO 7.7 (a): (sectiunea 7.2)
-   //   i = floor(p), f = fract(p); valorile din colturi: a = hash(i), b = hash(i + (1, 0)),
-   //   c = hash(i + (0, 1)), d = hash(i + (1, 1)); u = f * f * (3.0 - 2.0 * f);
-   //   rezultatul: mix(mix(a, b, u.x), mix(c, d, u.x), u.y).
-   return hash(floor(p));   // deocamdata: o valoare constanta pe fiecare celula
+    // P6* (TODO 7.7 a): celula (i) si pozitia in celula (f).
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+
+    // P6*: cate o valoare aleatoare in fiecare colt al celulei; celulele vecine au colturile comune,
+    // deci zgomotul este continuu (nu mai arata ca un mozaic).
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+
+    // P6*: curba f * f * (3 - 2f) (EaseInOut din laboratorul 6) are panta 0 la marginea celulei,
+    // deci trecerea de la o celula la alta nu are "cute". Interpolam pe x (jos si sus), apoi pe y.
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
 // "Fractal Brownian motion": 5 straturi (octave) de zgomot, fiecare de doua ori mai fin si mai slab.
@@ -54,10 +64,11 @@ void main()
 
     vec2 p = vUV * uScale + vec2(uTime * 0.05, 0.0);
 
-   // TODO 7.7 (b): marmura: dungi sinusoidale deformate de zgomot:
-   //   float veins = 0.5 + 0.5 * sin(p.x * 3.0 + uTurbulence * fbm(p));
-   //   float m = pow(1.0 - veins, 3.0);   // vine subtiri si intense
-   float m = fbm(p);
+    // P6* (TODO 7.7 b): marmura = dungi sinusoidale (sin(p.x * 3)) deformate de zgomot. Cu uTurbulence = 0
+    // dungile sunt drepte; cu cat creste, cu atat fbm le "indoaie" mai mult (vine incalcite).
+    float veins = 0.5 + 0.5 * sin(p.x * 3.0 + uTurbulence * fbm(p));
+    // P6*: puterea a treia pastreaza culoarea B doar aproape de minimul sinusului: vine subtiri si intense.
+    float m = pow(1.0 - veins, 3.0);
     vec3 color = mix(uColorA, uColorB, m);
     FragColor = vec4(color * vColor, 1.0);
 }
